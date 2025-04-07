@@ -662,7 +662,7 @@ if __name__ == "__main__":
                     print(Fore.YELLOW + "⚠️ Tidak ada saldo untuk swap balik.")
                     continue
 
-                print(Fore.BLUE + f"🔁 Swap balik: seluruh saldo {balance:.6f} {output_token_name}")
+                print(Fore.BLUE + f"🔁 Swap balik: seluruh saldo - 10%   {output_token_name}")
                 amount_wei = int(balance * (10 ** decimals))
 
                 back_swap = get_price_back(token, address, output_token_address, amount_wei, proxy)
