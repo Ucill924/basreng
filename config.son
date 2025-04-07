@@ -1,0 +1,7 @@
+{
+    "min_amount": 0.01,
+    "max_amount": 0.03,
+    "rpc": "https://testnet-rpc.monad.xyz",
+    "chainId": 10143,
+    "jumlah_swap": 100
+}
