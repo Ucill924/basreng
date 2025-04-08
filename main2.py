@@ -120,14 +120,17 @@ def get_proxy(proxies):
 def mask_address(address, show=6):
     return f"{address[:2+show]}...{address[-4:]}"
 
+def get_wallets_from_pk(filename):
+    wallets = []
+    with open(filename, "r") as f:
+        for line in f:
+            pk = line.strip()
+            if not pk:
+                continue
+            acct = w3.eth.account.from_key(pk)
+            wallets.append((acct.address, pk))
+    return wallets
 
-def get_wallets_from_pk(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            return [(Account.from_key(pk).address, pk) for pk in file if pk.strip()]
-    except FileNotFoundError:
-        print(Fore.RED + f"❌ File '{file_path}' tidak ditemukan!")
-        exit()
 
 
 def generate_nonce(length=17):
