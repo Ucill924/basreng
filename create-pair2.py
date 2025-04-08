@@ -157,10 +157,6 @@ def create_pair_strategy(token, pair, address, proxy):
 
 wallets = get_wallets()
 for i, (address, pk) in enumerate(wallets):
-    if i >= len(proxies_list):
-        print(Fore.RED + f"❌ Tidak cukup proxy untuk wallet ke-{i+1}")
-        break
-
     proxy = proxies_list[i]
     masked_proxy = mask_proxy(proxy)
     print(Fore.MAGENTA + f"🌐 Proxy digunakan: {masked_proxy} untuk wallet {mask_address(address)}")
