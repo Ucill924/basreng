@@ -13,8 +13,11 @@ from web3 import Web3
 init(autoreset=True)
 ua = UserAgent()
 
+
 with open("proxies.txt", "r") as f:
-    proxies_list = [line.strip() for line in f if line.strip()]
+    lines = [line.strip() for line in f if line.strip()]
+    proxy = lines[0] if lines else None
+
 create_per_wallet = int(input("Berapa kali create pair per wallet? "))
 
 TOKENS = {
@@ -49,10 +52,9 @@ def get_wallets(file_path='pk.txt'):
         print(Fore.RED + f"❌ File '{file_path}' tidak ditemukan!")
         exit()
 
-def get_proxy(proxies):
-    if not proxies:
+def get_proxy_dict():
+    if not proxy:
         return None
-    proxy = random.choice(proxies)
     return {
         "http": f"http://{proxy}",
         "https": f"http://{proxy}"
@@ -100,7 +102,7 @@ def sign_message(private_key, message):
     except:
         return None
 
-def auth(address, message, signature, proxy):
+def auth(address, message, signature):
     url = "https://alpha-api.hedgemony.xyz/auth"
     headers = {
         "accept": "application/json",
@@ -110,11 +112,11 @@ def auth(address, message, signature, proxy):
     payload = {
         "address": address,
         "message": message,
-        "signature": "0x"+ signature
+        "signature": "0x" + signature
     }
 
     try:
-        res = requests.post(url, headers=headers, json=payload, timeout=20, proxies=get_proxy([proxy]))
+        res = requests.post(url, headers=headers, json=payload, timeout=20, proxies=get_proxy_dict())
         if res.ok:
             token = res.json().get("accessToken")
             print(Fore.GREEN + f"✅ Login sukses: {mask_address(address)}")
@@ -130,7 +132,7 @@ def generate_hedge_pair():
     input_token_name = random.choice(list(TOKENS.keys() - {"Hedgemony"}))
     pair_name = f"{input_token_name}/HEDGE"
 
-    amount_eth = round(random.uniform(0.1, 0.5), 6) 
+    amount_eth = round(random.uniform(0.1, 0.5), 6)
     amount_wei = str(Web3.to_wei(amount_eth, 'ether'))
 
     return {
@@ -144,23 +146,21 @@ def generate_hedge_pair():
         "dcas": []
     }
 
-def create_pair_strategy(token, pair, address, proxy):
+def create_pair_strategy(token, pair, address):
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     payload = json.dumps(pair)
 
     try:
-        response = requests.post(ENDPOINT, headers=headers, data=payload, proxies=get_proxy([proxy]))
+        response = requests.post(ENDPOINT, headers=headers, data=payload, proxies=get_proxy_dict())
         res_data = response.json()
         print(Fore.CYAN + f"📈 Pair dibuat: {pair['name']} | ID: {res_data.get('id', 'N/A')} ({mask_address(address)})")
     except Exception as e:
         print(Fore.RED + f"❌ Gagal create strategy: {e}")
 
 wallets = get_wallets()
-for i, (address, pk) in enumerate(wallets):
-    proxy = proxies_list[i]
-    masked_proxy = mask_proxy(proxy)
-    print(Fore.MAGENTA + f"🌐 Proxy digunakan: {masked_proxy} untuk wallet {mask_address(address)}")
+print(Fore.MAGENTA + f"🌐 Menggunakan proxy: {mask_proxy(proxy)} untuk semua wallet\n")
 
+for address, pk in wallets:
     nonce = generate_nonce()
     timestamp = get_timestamp()
     message = create_sign_message(address, nonce, timestamp)
@@ -170,11 +170,11 @@ for i, (address, pk) in enumerate(wallets):
         print(Fore.RED + f"❌ Gagal sign message untuk {mask_address(address)}")
         continue
 
-    token = auth(address, message, signature, proxy)
+    token = auth(address, message, signature)
     if token:
         for _ in range(create_per_wallet):
             pair = generate_hedge_pair()
-            create_pair_strategy(token, pair, address, proxy)
+            create_pair_strategy(token, pair, address)
             delay = random.randint(12, 20)
             print(Fore.LIGHTBLACK_EX + f"⏳ Delay {delay} detik sebelum create pair berikutnya...")
             time.sleep(delay)
